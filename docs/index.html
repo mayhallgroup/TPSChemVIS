@@ -426,6 +426,151 @@ td:first-child{font-family:var(--mono);color:var(--text)}
 .badge.jl{background:var(--neg-dim);color:var(--neg)}
 .badge.sys{background:rgba(255,255,255,.04);color:var(--text-muted)}
 
+/* ── DEMO ── */
+.demo-wrap{padding:5rem 2rem;border-top:1px solid var(--border)}
+.demo-inner{max-width:var(--max);margin:0 auto}
+.demo-meta{
+  display:flex;align-items:center;gap:.75rem;
+  margin-bottom:2.5rem;flex-wrap:wrap;
+}
+.demo-tag{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;
+  text-transform:uppercase;padding:.25rem .7rem;
+  border:1px solid var(--border);color:var(--text-2);
+}
+.demo-tag.active{border-color:var(--pos);color:var(--pos);background:var(--pos-dim)}
+
+/* step tabs */
+.demo-tabs{
+  display:flex;gap:0;
+  border-bottom:1px solid var(--border);
+  margin-bottom:2.5rem;
+  overflow-x:auto;
+}
+.demo-tab{
+  padding:.6rem 1.1rem;
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text-muted);
+  border:none;background:none;cursor:pointer;
+  border-bottom:2px solid transparent;
+  white-space:nowrap;
+  transition:color .15s,border-color .15s;
+}
+.demo-tab:hover{color:var(--text-2)}
+.demo-tab.on{color:var(--pos);border-bottom-color:var(--pos)}
+
+/* step panels */
+.demo-panel{display:none}
+.demo-panel.on{display:grid;grid-template-columns:1fr 1.5fr;gap:2.5rem;align-items:start}
+
+.demo-desc-label{
+  font-family:var(--mono);font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--text-muted);margin-bottom:.5rem;
+}
+.demo-desc-title{
+  font-family:var(--mono);font-size:1.1rem;font-weight:700;
+  color:var(--text);margin-bottom:.75rem;line-height:1.25;
+}
+.demo-desc-body{font-size:.875rem;color:var(--text-2);line-height:1.7;margin-bottom:1rem}
+.demo-saves{
+  border-top:1px solid var(--border);padding-top:.75rem;margin-top:.5rem;
+}
+.demo-saves-label{
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--text-muted);margin-bottom:.5rem;
+}
+.demo-save-file{
+  display:flex;align-items:center;gap:.5rem;
+  font-family:var(--mono);font-size:.72rem;color:var(--text-2);
+  padding:.2rem 0;
+}
+.demo-save-file::before{content:'→';color:var(--pos);flex-shrink:0}
+
+/* app window mockup */
+.mock{border:1px solid var(--border);background:var(--bg);overflow:hidden}
+.mock-bar{
+  display:flex;align-items:center;gap:.5rem;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:.45rem .75rem;
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--text-muted);
+}
+.mock-dot{width:7px;height:7px;border-radius:50%;background:var(--border);flex-shrink:0}
+.mock-body{padding:1rem}
+
+/* mockup table */
+.mt{width:100%;border-collapse:collapse;font-size:.75rem}
+.mt th{
+  font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-muted);padding:.4rem .6rem;text-align:left;
+  border-bottom:1px solid var(--border);
+}
+.mt td{padding:.4rem .6rem;color:var(--text-2);font-family:var(--mono);border-bottom:1px solid rgba(26,45,66,.5)}
+.mt tr:last-child td{border-bottom:none}
+.mt tr:hover td{background:var(--surface)}
+
+/* cluster color pills */
+.cpill{
+  display:inline-block;padding:.1rem .45rem;
+  font-size:.62rem;letter-spacing:.04em;font-family:var(--mono);
+}
+.cpill.c1{background:rgba(15,184,212,.15);color:var(--pos)}
+.cpill.c2{background:rgba(255,181,0,.15);color:#ffb500}
+.cpill.c3{background:rgba(52,211,153,.15);color:#34d399}
+
+/* MO phase bars */
+.mo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+.mo-card{background:var(--surface);border:1px solid var(--border);padding:.6rem}
+.mo-phase{display:flex;gap:2px;height:18px;margin:.3rem 0}
+.ph{flex:1;border-radius:1px}
+.ph.p{background:var(--pos);opacity:.75}
+.ph.n{background:var(--neg);opacity:.75}
+.mo-meta{font-family:var(--mono);font-size:.6rem;color:var(--text-muted)}
+.mo-meta .en{color:var(--text-2)}
+.mo-cluster-dot{
+  display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:.3rem;
+}
+
+/* log pane mockup */
+.log-mock{
+  background:var(--bg);border:1px solid var(--border);
+  padding:.75rem 1rem;font-family:var(--mono);font-size:.72rem;line-height:1.8;
+}
+.ll{display:block}
+.ll .ts{color:var(--text-muted)}
+.ll .ok{color:var(--pos)}
+.ll .warn{color:#ffb500}
+.ll .val{color:var(--neg)}
+.ll .dim{color:var(--text-muted)}
+.ll .it{color:var(--text-2)}
+
+/* convergence mini-chart */
+.conv-chart{
+  position:relative;height:60px;margin:1rem 0;
+  border-bottom:1px solid var(--border);
+  border-left:1px solid var(--border);
+}
+.conv-line{
+  position:absolute;bottom:0;left:0;right:0;top:0;
+}
+
+/* info cards */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.info-kv{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:.4rem .6rem;background:var(--surface);
+  font-family:var(--mono);font-size:.7rem;
+}
+.info-kv .k{color:var(--text-muted)}
+.info-kv .v{color:var(--text)}
+.info-kv .vp{color:var(--pos)}
+
+@media(max-width:720px){
+  .demo-panel.on{grid-template-columns:1fr}
+  .mo-grid{grid-template-columns:repeat(2,1fr)}
+  .info-grid{grid-template-columns:1fr}
+}
+
 /* ── FOOTER ── */
 footer{
   border-top:1px solid var(--border);
@@ -487,6 +632,7 @@ a:focus-visible{outline:2px solid var(--pos);outline-offset:3px}
   <a class="nav-logo" href="#"><span class="pos">TPS</span><span class="neg">Chem</span>VIS</a>
   <div class="nav-links">
     <a href="#pipeline">Pipeline</a>
+    <a href="#demo">Demo</a>
     <a href="#install">Install</a>
     <a href="https://github.com/arnab82/TPSChemVIS" class="gh-btn">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -647,6 +793,301 @@ a:focus-visible{outline:2px solid var(--pos);outline-offset:3px}
     </div>
   </div>
 </div>
+
+<!-- DEMO -->
+<div class="demo-wrap" id="demo">
+<div class="demo-inner">
+  <p class="section-label">Example walkthrough</p>
+  <h2 class="section-heading">H₆ chain in STO-3G</h2>
+  <p class="section-sub">Six hydrogen atoms in a linear chain, equally spaced at 1.8 Å. Three bonding/antibonding pairs → three two-orbital clusters, each with fspace (1,1).</p>
+
+  <div class="demo-meta">
+    <span class="demo-tag active">H₆ linear</span>
+    <span class="demo-tag">STO-3G</span>
+    <span class="demo-tag">RHF</span>
+    <span class="demo-tag">6 MOs</span>
+    <span class="demo-tag">Manual clustering</span>
+  </div>
+
+  <div class="demo-tabs" role="tablist">
+    <button class="demo-tab on" onclick="showStep(0)" role="tab">01 Load</button>
+    <button class="demo-tab"   onclick="showStep(1)" role="tab">02 Visualize</button>
+    <button class="demo-tab"   onclick="showStep(2)" role="tab">03 Cluster</button>
+    <button class="demo-tab"   onclick="showStep(3)" role="tab">04 Integrals</button>
+    <button class="demo-tab"   onclick="showStep(4)" role="tab">05 CMF</button>
+    <button class="demo-tab"   onclick="showStep(5)" role="tab">06 TPSCI</button>
+  </div>
+
+  <!-- Step 1: Load -->
+  <div class="demo-panel on" id="ds0">
+    <div>
+      <p class="demo-desc-label">Step 01</p>
+      <h3 class="demo-desc-title">Load the PySCF checkpoint</h3>
+      <p class="demo-desc-body">
+        Point TPSChemVIS at a <code style="font-family:var(--mono);color:var(--pos);font-size:.85em">h6.chk</code> file produced by a PySCF RHF run.
+        The app reads geometry, basis, MO coefficients, and occupation numbers.
+        No configuration needed — provenance is shown immediately.
+      </p>
+      <p class="demo-desc-body">
+        If you're starting fresh you can run the SCF directly from the app's Load screen using the built-in PySCF runner, or supply an existing checkpoint.
+      </p>
+    </div>
+    <div class="mock">
+      <div class="mock-bar"><span class="mock-dot"></span> 1 · Load · h6_project</div>
+      <div class="mock-body">
+        <div class="info-grid">
+          <div class="info-kv"><span class="k">File</span><span class="vp">h6.chk</span></div>
+          <div class="info-kv"><span class="k">Size</span><span class="v">3.2 kB</span></div>
+          <div class="info-kv"><span class="k">Molecule</span><span class="v">H₆ linear</span></div>
+          <div class="info-kv"><span class="k">Basis</span><span class="v">STO-3G</span></div>
+          <div class="info-kv"><span class="k">Method</span><span class="v">RHF</span></div>
+          <div class="info-kv"><span class="k">Symmetry</span><span class="v">D∞h</span></div>
+          <div class="info-kv"><span class="k">nAO / nMO</span><span class="vp">6 / 6</span></div>
+          <div class="info-kv"><span class="k">Electrons</span><span class="v">6α + 6β</span></div>
+          <div class="info-kv"><span class="k">E(RHF)</span><span class="v">−3.2155 Eₕ</span></div>
+          <div class="info-kv"><span class="k">Bond length</span><span class="v">1.800 Å</span></div>
+        </div>
+        <div style="margin-top:.75rem;display:flex;justify-content:flex-end">
+          <span style="font-family:var(--mono);font-size:.7rem;color:var(--pos);border:1px solid var(--pos);padding:.3rem .8rem;letter-spacing:.06em">Continue →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Visualize -->
+  <div class="demo-panel" id="ds1">
+    <div>
+      <p class="demo-desc-label">Step 02</p>
+      <h3 class="demo-desc-title">Inspect the canonical MOs</h3>
+      <p class="demo-desc-body">
+        VibeMol renders each MO isosurface in the browser — cyan for the positive lobe,
+        coral for the negative lobe. For H₆ STO-3G you get six σ-type MOs ordered by
+        number of nodal planes (zero to five).
+      </p>
+      <p class="demo-desc-body">
+        The three occupied MOs (occ = 2.0) have predominantly bonding character;
+        the three virtuals (occ = 0.0) are their antibonding partners. Each bonding/antibonding
+        pair will form one cluster in the next step.
+      </p>
+    </div>
+    <div class="mock">
+      <div class="mock-bar"><span class="mock-dot"></span> 2 · Visualize MOs · VibeMol</div>
+      <div class="mock-body">
+        <div class="mo-grid">
+          <div class="mo-card">
+            <div class="mo-phase"><div class="ph p"></div><div class="ph p"></div><div class="ph p"></div><div class="ph p"></div><div class="ph p"></div><div class="ph p"></div></div>
+            <div class="mo-meta"><span class="mo-cluster-dot" style="background:var(--pos)"></span>MO 1  <span class="en">ε = −0.584</span>  occ <b style="color:var(--pos)">2.0</b></div>
+          </div>
+          <div class="mo-card">
+            <div class="mo-phase"><div class="ph p"></div><div class="ph p"></div><div class="ph p"></div><div class="ph n"></div><div class="ph n"></div><div class="ph n"></div></div>
+            <div class="mo-meta"><span class="mo-cluster-dot" style="background:#ffb500"></span>MO 2  <span class="en">ε = −0.476</span>  occ <b style="color:var(--pos)">2.0</b></div>
+          </div>
+          <div class="mo-card">
+            <div class="mo-phase"><div class="ph p"></div><div class="ph n"></div><div class="ph n"></div><div class="ph p"></div><div class="ph p"></div><div class="ph n"></div></div>
+            <div class="mo-meta"><span class="mo-cluster-dot" style="background:#34d399"></span>MO 3  <span class="en">ε = −0.391</span>  occ <b style="color:var(--pos)">2.0</b></div>
+          </div>
+          <div class="mo-card">
+            <div class="mo-phase"><div class="ph p"></div><div class="ph n"></div><div class="ph p"></div><div class="ph n"></div><div class="ph p"></div><div class="ph n"></div></div>
+            <div class="mo-meta"><span class="mo-cluster-dot" style="background:var(--pos)"></span>MO 4  <span class="en">ε = +0.391</span>  occ <b style="color:var(--text-muted)">0.0</b></div>
+          </div>
+          <div class="mo-card">
+            <div class="mo-phase"><div class="ph n"></div><div class="ph n"></div><div class="ph p"></div><div class="ph n"></div><div class="ph n"></div><div class="ph p"></div></div>
+            <div class="mo-meta"><span class="mo-cluster-dot" style="background:#ffb500"></span>MO 5  <span class="en">ε = +0.476</span>  occ <b style="color:var(--text-muted)">0.0</b></div>
+          </div>
+          <div class="mo-card">
+            <div class="mo-phase"><div class="ph n"></div><div class="ph n"></div><div class="ph n"></div><div class="ph n"></div><div class="ph n"></div><div class="ph n"></div></div>
+            <div class="mo-meta"><span class="mo-cluster-dot" style="background:#34d399"></span>MO 6  <span class="en">ε = +0.584</span>  occ <b style="color:var(--text-muted)">0.0</b></div>
+          </div>
+        </div>
+        <p style="font-family:var(--mono);font-size:.62rem;color:var(--text-muted);margin-top:.75rem">
+          Phase bar: <span style="color:var(--pos)">■ positive</span> &nbsp; <span style="color:var(--neg)">■ negative</span> &nbsp;·&nbsp; each segment = one H atom
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Cluster -->
+  <div class="demo-panel" id="ds2">
+    <div>
+      <p class="demo-desc-label">Step 03</p>
+      <h3 class="demo-desc-title">Assign MOs to clusters</h3>
+      <p class="demo-desc-body">
+        Switch to <b>Manual mode</b>. Click MO 1 → Cluster 1, MO 4 → Cluster 1 (the bonding/antibonding pair sharing the same nodal structure). Repeat for MOs (2,5) → Cluster 2 and (3,6) → Cluster 3.
+      </p>
+      <p class="demo-desc-body">
+        Each cluster gets exactly 2 orbitals — one occupied, one virtual — so the fspace will be automatically derived as (1,1) per cluster from the mo_occ values.
+      </p>
+      <div class="demo-saves">
+        <p class="demo-saves-label">Validated</p>
+        <div class="demo-save-file">3 clusters · 6 active orbitals · fspace [(1,1),(1,1),(1,1)]</div>
+      </div>
+    </div>
+    <div class="mock">
+      <div class="mock-bar"><span class="mock-dot"></span> 3 · Clusters · Manual mode</div>
+      <div class="mock-body" style="padding:.5rem">
+        <table class="mt">
+          <thead><tr><th>#</th><th>occ</th><th>ε (Eₕ)</th><th>character</th><th>cluster</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td style="color:var(--pos)">2.0</td><td>−0.584</td><td style="color:var(--text-muted)">σ₁ bond</td><td><span class="cpill c1">Cluster 1</span></td></tr>
+            <tr><td>2</td><td style="color:var(--pos)">2.0</td><td>−0.476</td><td style="color:var(--text-muted)">σ₂ bond</td><td><span class="cpill c2">Cluster 2</span></td></tr>
+            <tr><td>3</td><td style="color:var(--pos)">2.0</td><td>−0.391</td><td style="color:var(--text-muted)">σ₃ bond</td><td><span class="cpill c3">Cluster 3</span></td></tr>
+            <tr><td>4</td><td style="color:var(--text-muted)">0.0</td><td>+0.391</td><td style="color:var(--text-muted)">σ₃* anti</td><td><span class="cpill c1">Cluster 1</span></td></tr>
+            <tr><td>5</td><td style="color:var(--text-muted)">0.0</td><td>+0.476</td><td style="color:var(--text-muted)">σ₂* anti</td><td><span class="cpill c2">Cluster 2</span></td></tr>
+            <tr><td>6</td><td style="color:var(--text-muted)">0.0</td><td>+0.584</td><td style="color:var(--text-muted)">σ₁* anti</td><td><span class="cpill c3">Cluster 3</span></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:.75rem;display:flex;align-items:center;gap:.5rem">
+          <span style="font-family:var(--mono);font-size:.65rem;color:var(--pos)">✓</span>
+          <span style="font-family:var(--mono);font-size:.65rem;color:var(--text-2)">Clusters look valid — ready to build.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Integrals -->
+  <div class="demo-panel" id="ds3">
+    <div>
+      <p class="demo-desc-label">Step 04</p>
+      <h3 class="demo-desc-title">Build the active space</h3>
+      <p class="demo-desc-body">
+        TPSChemVIS groups the active columns by cluster (1,4 → cols 0,1 ; 2,5 → cols 2,3 ; 3,6 → cols 4,5) before computing integrals, so orbital indices are sequential within each cluster in the saved files.
+      </p>
+      <p class="demo-desc-body">
+        Per-cluster <code style="font-family:var(--mono);font-size:.85em;color:var(--pos)">.molden</code> files are written first so you can inspect the active MOs in VibeMol before the integrals are saved. Edit nα / nβ here if the auto-derived fspace needs correction.
+      </p>
+      <div class="demo-saves">
+        <p class="demo-saves-label">Saved to active_space/</p>
+        <div class="demo-save-file">h0.npy · h1.npy · h2.npy</div>
+        <div class="demo-save-file">Cact.molden · cluster_1_bond.molden · cluster_2_bond.molden · cluster_3_bond.molden</div>
+      </div>
+    </div>
+    <div class="mock">
+      <div class="mock-bar"><span class="mock-dot"></span> 5 · Integrals · verify fspace</div>
+      <div class="mock-body" style="padding:.5rem">
+        <table class="mt">
+          <thead><tr><th>Cluster</th><th>n_orb</th><th>nα</th><th>nβ</th><th>Orbitals</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="cpill c1">1</span> σ₁ pair</td>
+              <td>2</td>
+              <td style="color:var(--pos)">1</td>
+              <td style="color:var(--pos)">1</td>
+              <td style="color:var(--text-muted)">1, 2</td>
+            </tr>
+            <tr>
+              <td><span class="cpill c2">2</span> σ₂ pair</td>
+              <td>2</td>
+              <td style="color:var(--pos)">1</td>
+              <td style="color:var(--pos)">1</td>
+              <td style="color:var(--text-muted)">3, 4</td>
+            </tr>
+            <tr>
+              <td><span class="cpill c3">3</span> σ₃ pair</td>
+              <td>2</td>
+              <td style="color:var(--pos)">1</td>
+              <td style="color:var(--pos)">1</td>
+              <td style="color:var(--text-muted)">5, 6</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:.75rem;font-family:var(--mono);font-size:.65rem;color:var(--text-muted)">
+          fspace auto-derived from mo_occ · edit cells to override
+        </div>
+        <div style="margin-top:.6rem;display:flex;justify-content:flex-end">
+          <span style="font-family:var(--mono);font-size:.7rem;color:var(--pos);border:1px solid var(--pos);padding:.3rem .8rem;letter-spacing:.06em">Save &amp; Continue →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 5: CMF -->
+  <div class="demo-panel" id="ds4">
+    <div>
+      <p class="demo-desc-label">Step 05</p>
+      <h3 class="demo-desc-title">Run CMF orbital optimization</h3>
+      <p class="demo-desc-body">
+        Select <b>Newton (cmf_oo_newton)</b> for quadratic convergence. The app writes <code style="font-family:var(--mono);font-size:.85em;color:var(--pos)">driver_cmf.jl</code>, runs it as a Julia subprocess, and streams output line-by-line into the log.
+      </p>
+      <p class="demo-desc-body">
+        For H₆ STO-3G the Newton optimizer converges in around 18 macro-iterations. The CMF energy of −3.2294 Eₕ is slightly below the RHF energy, reflecting the CASSCF-like intra-cluster correlation captured in the orbital rotation.
+      </p>
+      <div class="demo-saves">
+        <p class="demo-saves-label">Saved to cmf/</p>
+        <div class="demo-save-file">driver_cmf.jl · cmf_result.jld2</div>
+      </div>
+    </div>
+    <div class="mock">
+      <div class="mock-bar"><span class="mock-dot"></span> 6 · CMF · Newton · live output</div>
+      <div class="mock-body" style="padding:.75rem">
+        <div class="log-mock">
+          <span class="ll"><span class="ts">[setup]</span> <span class="ok">Pkg.instantiate done</span></span>
+          <span class="ll"><span class="ts">[setup]</span> <span class="ok">PyCall build OK</span></span>
+          <span class="ll"><span class="ts">[cmf]  </span> wrote driver_cmf.jl, launching Julia…</span>
+          <span class="ll"><span class="ts">[cmf]  </span> <span class="dim">iter  1  E = −3.215612  ‖g‖ = </span><span class="val">2.48e−02</span></span>
+          <span class="ll"><span class="ts">[cmf]  </span> <span class="dim">iter  5  E = −3.229014  ‖g‖ = </span><span class="warn">4.31e−03</span></span>
+          <span class="ll"><span class="ts">[cmf]  </span> <span class="dim">iter 12  E = −3.229387  ‖g‖ = </span><span class="ok">9.82e−05</span></span>
+          <span class="ll"><span class="ts">[cmf]  </span> <span class="dim">iter 18  E = −3.229391  ‖g‖ = </span><span class="ok">3.14e−09</span></span>
+          <span class="ll"><span class="ts">[cmf]  </span> <span class="ok">converged</span> <span class="dim">→</span> <span class="ok">cmf_result.jld2</span></span>
+        </div>
+        <div style="margin-top:.6rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem">
+          <div class="info-kv"><span class="k">E(CMF)</span><span class="vp">−3.229391 Eₕ</span></div>
+          <div class="info-kv"><span class="k">ΔE vs RHF</span><span class="v">−0.013 Eₕ</span></div>
+          <div class="info-kv"><span class="k">Iterations</span><span class="v">18</span></div>
+          <div class="info-kv"><span class="k">‖grad‖</span><span class="vp">3.14 × 10⁻⁹</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 6: TPSCI -->
+  <div class="demo-panel" id="ds5">
+    <div>
+      <p class="demo-desc-label">Step 06</p>
+      <h3 class="demo-desc-title">Run TPSCI</h3>
+      <p class="demo-desc-body">
+        Set the variational threshold <code style="font-family:var(--mono);font-size:.85em;color:var(--pos)">thresh_var = 1e-2</code> and click <b>Run locally</b>. The rendered Julia driver reads the CMF result bundle and runs the selected CI method.
+      </p>
+      <p class="demo-desc-body">
+        TPSCI selects 48 determinants for H₆ STO-3G at this threshold. The PT2 correction accounts for the remaining dynamic correlation, giving a final energy of −3.465 Eₕ — well below the FCI reference, confirming convergence.
+      </p>
+      <div class="demo-saves">
+        <p class="demo-saves-label">Saved to export/</p>
+        <div class="demo-save-file">driver_tpsci.jl · export.log</div>
+      </div>
+    </div>
+    <div class="mock">
+      <div class="mock-bar"><span class="mock-dot"></span> 7 · TPSCI / Export · local run</div>
+      <div class="mock-body" style="padding:.75rem">
+        <div class="log-mock">
+          <span class="ll"><span class="ts">[tpsci]</span> Loading cmf_result.jld2…</span>
+          <span class="ll"><span class="ts">[tpsci]</span> Building cluster basis (FCIAnsatz 2,1,1 × 3)…</span>
+          <span class="ll"><span class="ts">[tpsci]</span> <span class="dim">thresh_var = 1e−2   thresh_foi = 1e−3</span></span>
+          <span class="ll"><span class="ts">[tpsci]</span> <span class="dim">Selected </span><span class="ok">48</span><span class="dim"> determinants</span></span>
+          <span class="ll"><span class="ts">[tpsci]</span> <span class="ok">State 0  E = −3.452148 Eₕ</span></span>
+          <span class="ll"><span class="ts">[pt2]  </span> <span class="dim">PT2 correction: ΔE = </span><span class="val">−0.012401 Eₕ</span></span>
+          <span class="ll"><span class="ts">[pt2]  </span> <span class="ok">E(TPSCI+PT2) = −3.464549 Eₕ</span></span>
+        </div>
+        <div style="margin-top:.6rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem">
+          <div class="info-kv"><span class="k">E(TPSCI)</span><span class="vp">−3.452148 Eₕ</span></div>
+          <div class="info-kv"><span class="k">E(+PT2)</span><span class="vp">−3.464549 Eₕ</span></div>
+          <div class="info-kv"><span class="k">ndet</span><span class="v">48</span></div>
+          <div class="info-kv"><span class="k">nroots</span><span class="v">1</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- .demo-inner -->
+</div><!-- .demo-wrap -->
+
+<script>
+function showStep(i){
+  var tabs=document.querySelectorAll('.demo-tab');
+  var panels=document.querySelectorAll('.demo-panel');
+  tabs.forEach(function(t,j){t.classList.toggle('on',j===i)});
+  panels.forEach(function(p,j){p.classList.toggle('on',j===i)});
+}
+</script>
 
 <!-- INSTALL -->
 <div class="install-section" id="install">
