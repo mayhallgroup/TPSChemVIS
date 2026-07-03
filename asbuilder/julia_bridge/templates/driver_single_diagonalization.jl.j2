@@ -1,0 +1,94 @@
+{#
+  Single TPSCI diagonalization driver.
+
+  Builds a TPSCI reference state and calls TPSChem.tps_ci_direct once. This is
+  the direct/single diagonalization pattern used in tests such as test_tpsci.jl
+  and test_openshell.jl.
+#}
+# Auto-generated -- do not edit by hand. Edit driver_single_diagonalization.jl.j2 instead.
+
+using TPSChem
+using TPSChem.QCBase
+using TPSChem.RDM
+using JLD2
+using Printf
+
+println("[single_diag] loading CMF result from {{ cmf_result_path }}")
+@load "{{ cmf_result_path }}" ints clusters init_fspace d1 e_cmf U
+
+max_roots = {{ max_roots | default(20) }}
+nroots    = {{ nroots | default(1) }}
+
+# --- reference Fock config --------------------------------------------------
+ref_fspace = [f for f in init_fspace]
+{% if flip_clusters | default([]) %}
+# Explicit spin-flip list from the GUI -- overrides the auto default.
+{% for c in flip_clusters %}
+ref_fspace[{{ c }}] = (init_fspace[{{ c }}][2], init_fspace[{{ c }}][1])
+{% endfor %}
+{% elif auto_flip | default(false) %}
+# Auto broken-symmetry default: alternate open-shell cluster spins.
+let flip = false
+    for i in 1:length(ref_fspace)
+        na, nb = ref_fspace[i]
+        na == nb && continue
+        flip && (ref_fspace[i] = (nb, na))
+        flip = !flip
+    end
+end
+{% endif %}
+ref_fock = TPSChem.FockConfig(ref_fspace)
+println("[single_diag] reference Fock config = ", ref_fock)
+
+println("[single_diag] building cluster eigenbasis")
+{% if spin_adapt | default(true) %}
+delta_elec = [{{ delta_elec | default(3) }} for _ in clusters]
+cluster_bases = TPSChem.compute_cluster_eigenbasis_spin(
+    ints, clusters, d1, delta_elec, ref_fock;
+    max_roots=max_roots, verbose={{ verbose | default(1) }})
+{% else %}
+cluster_bases = TPSChem.compute_cluster_eigenbasis(ints, clusters;
+    verbose={{ verbose | default(1) }},
+    max_roots=max_roots,
+    init_fspace=init_fspace,
+    rdm1a=d1.a, rdm1b=d1.b)
+{% endif %}
+
+clustered_ham = TPSChem.extract_ClusteredTerms(ints, clusters)
+cluster_ops   = TPSChem.compute_cluster_ops(cluster_bases, ints)
+TPSChem.add_cmf_operators!(cluster_ops, cluster_bases, ints, d1.a, d1.b)
+
+ci_vector = TPSChem.TPSCIstate(clusters, ref_fock, R=nroots, T=Float64)
+{% if add_spin_fock | default(true) %}
+ci_vector = TPSChem.add_spin_focksectors(ci_vector)
+{% endif %}
+
+begin
+    seed = zeros(Float64, nroots); seed[1] = 1.0
+    ci_vector[ref_fock][TPSChem.ClusterConfig([1 for _ in clusters])] = seed
+end
+
+println("[single_diag] running tps_ci_direct")
+e_ci, v_ci = TPSChem.tps_ci_direct(ci_vector, cluster_ops, clustered_ham;
+    conv_thresh   = {{ conv_thresh | default("1e-5") }},
+    lindep_thresh = {{ lindep_thresh | default("1e-12") }},
+    max_ss_vecs   = {{ max_ss_vecs | default(12) }},
+    max_iter      = {{ diag_max_iter | default(40) }},
+    precond       = {{ precond | default(true) | lower }},
+    verbose       = {{ verbose | default(1) }},
+    solver        = "{{ solver | default('davidson') }}")
+
+@printf("[single_diag] E(single diagonalization) = %s\n", string(e_ci))
+
+mkpath("{{ output_dir }}")
+jldsave("{{ output_dir }}/single_diagonalization_result.jld2";
+    e_ci=e_ci,
+    v_ci=v_ci,
+    cluster_bases=cluster_bases,
+    init_fspace=init_fspace,
+    ref_fspace=ref_fspace)
+open("{{ output_dir }}/energies.txt", "w") do io
+    println(io, "E(single diagonalization): ", e_ci)
+end
+
+println("[single_diag] done")

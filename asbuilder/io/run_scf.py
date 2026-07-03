@@ -37,6 +37,9 @@ def run_scf(
     spin: int = 0,
     chk_path: str | Path = "calc.chk",
     verbose: int = 4,
+    density_fit: bool = False,
+    auxbasis: str | None = None,
+    newton: bool = False,
 ) -> SCFResult:
     """Build a PySCF Mole from `xyz`/`basis`/`charge`/`spin`, run the given
     SCF `method`, and dump a checkpoint to `chk_path`.
@@ -45,15 +48,19 @@ def run_scf(
     e.g. "Cr 0 0 0\\nCr 0 0 2.5". `spin` is PySCF's convention: 2S = n_alpha
     - n_beta.
 
-    This is a generic placeholder covering the common RHF/UHF/ROHF case --
-    it does NOT yet know about whatever DFT functional, ECP, or
-    metal-specific settings your actual notebook uses for e.g. the Cr2
-    Morokuma bimetallic system in your cMF_data examples. Replace with the
-    real logic once shared.
+    `density_fit`: wrap the SCF object with DF/RI approximation. `auxbasis`
+    sets the auxiliary basis (None → PySCF auto-selects, typically weigend or
+    the cc-pVDZ-jkfit family matching the AO basis).
+
+    `newton`: wrap with the second-order Newton-Raphson solver after any DF
+    wrapping. Useful for difficult convergence cases (open-shell metals, etc.).
     """
     from pyscf import gto, scf
 
+    chk_path = Path(chk_path)
+    chk_path.parent.mkdir(parents=True, exist_ok=True)
     mol = gto.M(atom=xyz, basis=basis, charge=charge, spin=spin, verbose=verbose)
+    mol.output = str(chk_path.with_suffix(".pyscf.log"))
 
     method = method.upper()
     if method == "RHF":
@@ -65,8 +72,11 @@ def run_scf(
     else:
         raise ValueError(f"unsupported method {method!r}; extend run_scf() for DFT/other methods")
 
-    chk_path = Path(chk_path)
-    chk_path.parent.mkdir(parents=True, exist_ok=True)
+    if density_fit:
+        mf = mf.density_fit(auxbasis=auxbasis)
+    if newton:
+        mf = mf.newton()
+
     mf.chkfile = str(chk_path)
     mf.kernel()
 

@@ -20,7 +20,9 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QPlainTextEdit,
     QPushButton,
+    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -54,14 +56,30 @@ class LoadScreen(QWidget):
         self._path_label = QLabel("No checkpoint loaded.")
 
         self._prov_box = QGroupBox("Provenance (read-only)")
-        self._prov_form = QFormLayout()
-        self._prov_box.setLayout(self._prov_form)
-        self._prov_labels: dict[str, QLabel] = {}
+        prov_content = QWidget()
+        self._prov_form = QFormLayout(prov_content)
+        self._prov_labels: dict[str, QLabel | QPlainTextEdit] = {}
         for key in ("formula", "basis", "charge", "spin", "n_atoms",
                     "n_orb", "n_electrons", "e_tot", "method"):
-            lbl = QLabel("-")
-            self._prov_labels[key] = lbl
-            self._prov_form.addRow(key, lbl)
+            if key == "formula":
+                widget: QLabel | QPlainTextEdit = QPlainTextEdit("-")
+                widget.setReadOnly(True)
+                widget.setFixedHeight(110)
+                widget.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+                font = widget.font()
+                font.setFamily("monospace")
+                widget.setFont(font)
+            else:
+                widget = QLabel("-")
+            self._prov_labels[key] = widget
+            self._prov_form.addRow(key, widget)
+
+        prov_scroll = QScrollArea()
+        prov_scroll.setWidget(prov_content)
+        prov_scroll.setWidgetResizable(True)
+        prov_scroll.setMaximumHeight(300)
+        prov_box_layout = QVBoxLayout(self._prov_box)
+        prov_box_layout.addWidget(prov_scroll)
 
         self._continue_btn = QPushButton("Continue → Generate Molden")
         self._continue_btn.setEnabled(False)
@@ -97,15 +115,28 @@ class LoadScreen(QWidget):
         resume_layout.addWidget(browse_cmf_btn)
         resume_layout.addWidget(browse_export_btn)
 
+        # Scrollable body — keeps the Continue button always visible even on
+        # small screens or when the formula/geometry block is very long.
+        body = QWidget()
+        body_layout = QVBoxLayout(body)
+        body_layout.addWidget(title)
+        body_layout.addLayout(start_row)
+        body_layout.addWidget(self._path_label)
+        body_layout.addWidget(self._prov_box)
+        body_layout.addWidget(resume_group)
+        body_layout.addStretch(1)
+
+        scroll = QScrollArea()
+        scroll.setWidget(body)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+
         layout = QVBoxLayout(self)
-        layout.addWidget(title)
-        layout.addLayout(start_row)
-        layout.addWidget(self._path_label)
-        layout.addWidget(self._prov_box)
-        layout.addWidget(resume_group)
-        layout.addStretch(1)
+        layout.setContentsMargins(0, 0, 0, 4)
+        layout.addWidget(scroll, stretch=1)
         layout.addWidget(self._continue_btn)
         self.setLayout(layout)
+        self.setMinimumSize(0, 0)
 
         self._refresh_resume_buttons()
 
@@ -113,8 +144,12 @@ class LoadScreen(QWidget):
     # Public
 
     def show_provenance(self, provenance: dict) -> None:
-        for key, label in self._prov_labels.items():
-            label.setText(str(provenance.get(key, "-")))
+        for key, widget in self._prov_labels.items():
+            value = str(provenance.get(key, "-"))
+            if isinstance(widget, QPlainTextEdit):
+                widget.setPlainText(value)
+            else:
+                widget.setText(value)
         self._continue_btn.setEnabled(True)
 
     def refresh(self) -> None:

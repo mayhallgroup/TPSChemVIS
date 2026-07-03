@@ -1,46 +1,120 @@
-{# Full CI diagonalization in the cluster product basis (ci_solve). #}
+{#
+  FOIS-CI driver.
+
+  Uses TPSChem.do_fois_ci(ref::TPSCIstate, cluster_ops, clustered_ham; ...)
+  instead of a direct ci_solve. This grows the first-order interacting space
+  around the TPSCI reference and diagonalizes in that FOIS space.
+#}
 # Auto-generated -- do not edit by hand. Edit driver_fci_solve.jl.j2 instead.
 
 using TPSChem
 using TPSChem.QCBase
 using TPSChem.RDM
 using JLD2
-using NPZ
 using Printf
 
-println("[driver_fci_solve] loading CMF result from {{ cmf_result_path }}")
+# Compatibility shim for current TPSChem.jl: do_fois_ci(::TPSCIstate, ...)
+# calls orth_dot on TPSCIstate, but TPSChem only defines that helper for SPTstate
+# and Tucker in the version used by the GUI.
+if !hasmethod(TPSChem.orth_dot,
+              Tuple{TPSChem.TPSCIstate{Float64,1,1},
+                    TPSChem.TPSCIstate{Float64,1,1}})
+    function TPSChem.orth_dot(v1::TPSChem.TPSCIstate{T,N,R},
+                              v2::TPSChem.TPSCIstate{T,N,R}) where {T,N,R}
+        dots = zeros(T, R)
+        for (fock, configs) in v2.data
+            haskey(v1, fock) || continue
+            for (config, coeffs) in configs
+                haskey(v1[fock], config) || continue
+                for r in 1:R
+                    dots[r] += v1[fock][config][r] * coeffs[r]
+                end
+            end
+        end
+        return dots
+    end
+end
+
+println("[fois_ci] loading CMF result from {{ cmf_result_path }}")
 @load "{{ cmf_result_path }}" ints clusters init_fspace d1 e_cmf U
 
 max_roots = {{ max_roots | default(20) }}
 nroots    = {{ nroots | default(1) }}
 
-println("[driver_fci_solve] building cluster eigenbasis")
+# --- reference Fock config --------------------------------------------------
+ref_fspace = [f for f in init_fspace]
+{% if flip_clusters | default([]) %}
+# Explicit spin-flip list from the GUI -- overrides the auto default.
+{% for c in flip_clusters %}
+ref_fspace[{{ c }}] = (init_fspace[{{ c }}][2], init_fspace[{{ c }}][1])
+{% endfor %}
+{% elif auto_flip | default(false) %}
+# Auto broken-symmetry default: alternate open-shell cluster spins.
+let flip = false
+    for i in 1:length(ref_fspace)
+        na, nb = ref_fspace[i]
+        na == nb && continue
+        flip && (ref_fspace[i] = (nb, na))
+        flip = !flip
+    end
+end
+{% endif %}
+ref_fock = TPSChem.FockConfig(ref_fspace)
+println("[fois_ci] reference Fock config = ", ref_fock)
+
+println("[fois_ci] building cluster eigenbasis")
+{% if spin_adapt | default(true) %}
+delta_elec = [{{ delta_elec | default(3) }} for _ in clusters]
+cluster_bases = TPSChem.compute_cluster_eigenbasis_spin(
+    ints, clusters, d1, delta_elec, ref_fock;
+    max_roots=max_roots, verbose={{ verbose | default(1) }})
+{% else %}
 cluster_bases = TPSChem.compute_cluster_eigenbasis(ints, clusters;
-                    verbose={{ verbose | default(1) }},
-                    max_roots=max_roots,
-                    init_fspace=init_fspace,
-                    rdm1a=d1.a, rdm1b=d1.b)
+    verbose={{ verbose | default(1) }},
+    max_roots=max_roots,
+    init_fspace=init_fspace,
+    rdm1a=d1.a, rdm1b=d1.b)
+{% endif %}
 
 clustered_ham = TPSChem.extract_ClusteredTerms(ints, clusters)
 cluster_ops   = TPSChem.compute_cluster_ops(cluster_bases, ints)
 TPSChem.add_cmf_operators!(cluster_ops, cluster_bases, ints, d1.a, d1.b)
 
-ref_fock  = TPSChem.FockConfig(init_fspace)
 ci_vector = TPSChem.TPSCIstate(clusters, ref_fock, R=nroots, T=Float64)
+{% if add_spin_fock | default(true) %}
+ci_vector = TPSChem.add_spin_focksectors(ci_vector)
+{% endif %}
+
 begin
     seed = zeros(Float64, nroots); seed[1] = 1.0
     ci_vector[ref_fock][TPSChem.ClusterConfig([1 for _ in clusters])] = seed
 end
 
-println("[driver_fci_solve] running ci_solve (full diagonalization in cluster basis)")
-e_ci, v_ci = TPSChem.ci_solve(ci_vector, cluster_ops, clustered_ham)
+println("[fois_ci] running do_fois_ci")
+e_ci, v_ci = TPSChem.do_fois_ci(ci_vector, cluster_ops, clustered_ham;
+    H0          = "{{ H0 | default('Hcmf') }}",
+    max_iter    = {{ fois_max_iter | default(50) }},
+    nbody       = {{ nbody | default(4) }},
+    thresh_foi  = {{ thresh_foi | default("1e-4") }},
+    tol         = {{ tol | default("1e-5") }},
+    thresh_clip = {{ thresh_clip | default("1e-6") }},
+    threaded    = {{ threaded | default(false) | lower }},
+    prescreen   = {{ prescreen | default(false) | lower }},
+    compress    = {{ compress | default(false) | lower }},
+    pt          = {{ pt | default(false) | lower }},
+    verbose     = {{ verbose | default(1) }})
 
-@printf("[driver_fci_solve] E(FCI-solve) = %s\n", string(e_ci))
+@printf("[fois_ci] E(FOIS-CI) = %s\n", string(e_ci))
 
 mkpath("{{ output_dir }}")
-jldsave("{{ output_dir }}/fci_solve_result.jld2"; e_ci=e_ci, v_ci=v_ci)
+jldsave("{{ output_dir }}/fois_ci_result.jld2";
+    e_ci=e_ci,
+    v_ci=v_ci,
+    cluster_bases=cluster_bases,
+    init_fspace=init_fspace,
+    ref_fspace=ref_fspace)
 open("{{ output_dir }}/energies.txt", "w") do io
-    println(io, "E(FCI-solve): ", e_ci)
+    println(io, "E(FOIS-CI): ", e_ci)
 end
 
-println("[driver_fci_solve] done")
+println("[fois_ci] done")

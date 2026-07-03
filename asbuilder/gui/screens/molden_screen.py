@@ -33,6 +33,7 @@ class MoldenScreen(QWidget):
         layout.addWidget(self._start_btn)
         layout.addStretch(1)
         self.setLayout(layout)
+        self.setMinimumSize(0, 0)
 
         self._chk_path: Path | None = None
         self._molden_out: Path | None = None

@@ -15,8 +15,27 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from PyQt6.QtCore import QEvent, QSize, QTimer
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMainWindow, QMenuBar, QMessageBox, QStackedWidget, QStatusBar, QToolBar
+
+
+class _FlexStack(QStackedWidget):
+    """QStackedWidget that never forces the window taller than the screen.
+
+    A plain QStackedWidget reports minimumSizeHint() = max over all pages of
+    each page's own minimumSizeHint(). Our tallest pages (ExportScreen ~1059px,
+    CMFScreen ~730px) would therefore force QMainWindow to grow the whole
+    window past the screen height, no matter how many resize() calls we make.
+    Overriding the hint to (0, 0) lets the window open at whatever size we
+    resize() it to; pages themselves scroll / use splitters for their content.
+    """
+
+    def minimumSizeHint(self) -> QSize:  # noqa: D102
+        return QSize(0, 0)
+
+    def sizeHint(self) -> QSize:  # noqa: D102
+        return QSize(0, 0)
 
 from asbuilder.gui.screens.active_space_screen import ActiveSpaceScreen
 from asbuilder.gui.screens.cmf_screen import CMFScreen
@@ -38,8 +57,7 @@ class MainWindow(QMainWindow):
         vibemol_root: str | Path | None = None,
     ) -> None:
         super().__init__()
-        self.setWindowTitle("Active Space Builder")
-        self.resize(1400, 900)
+        self.setWindowTitle(f"TPS-chemistry — {Path(project_root).name}")
 
         project_root = Path(project_root)
         self.project = (
@@ -63,7 +81,12 @@ class MainWindow(QMainWindow):
         self.cmf_screen = CMFScreen(julia_project_dir=julia_project, julia_bin=julia_bin)
         self.export_screen = ExportScreen()
 
-        self.stack = QStackedWidget()
+        self.stack = _FlexStack()
+        # Allow the stack to be any height so QTimer-deferred resize works.
+        # Without this, QStackedWidget enforces the maximum minimumSizeHint()
+        # of all pages (dominated by QWebEngineView / OrbitalTable) and Qt
+        # silently ignores resize() calls that are smaller than that minimum.
+        self.stack.setMinimumSize(0, 0)
         self._screen_meta = [
             (self.load_screen,          "1. Load"),
             (self.molden_screen,        "2. Molden"),
@@ -100,6 +123,26 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(setup_act)
 
         self._wire_signals()
+
+        # Set size BEFORE show() so Qt never displays the window taller than
+        # the screen.  setMaximumHeight cap is lifted in showEvent after Qt
+        # has finished positioning, leaving the window freely resizable.
+        from asbuilder.gui._screen_util import screen_capped_size
+        w, h = screen_capped_size(1400, 700, pct=0.65)
+        self.setMaximumHeight(h)
+        self.resize(w, h)
+        self._initial_h = h
+
+    # -- initial sizing -------------------------------------------------
+
+    def showEvent(self, event: QEvent) -> None:
+        super().showEvent(event)
+        if hasattr(self, '_initial_h'):
+            from asbuilder.gui._screen_util import center_on_screen
+            center_on_screen(self)
+            # Release the height cap so user can resize freely
+            QTimer.singleShot(300, lambda: self.setMaximumHeight(16777215))
+            del self._initial_h
 
     # -- routing --------------------------------------------------------
 
@@ -163,7 +206,7 @@ class MainWindow(QMainWindow):
 
     def _on_molden_ready(self, chk, molden_path: str) -> None:
         self.project.advance("molden_generated")
-        self.viewer_screen.load(chk, molden_path)
+        self.viewer_screen.load(chk, molden_path, chk_path=str(self.project.root / "input.chk"))
         self._goto(self.viewer_screen)
 
     def _on_build_requested(self, chk, clusters) -> None:

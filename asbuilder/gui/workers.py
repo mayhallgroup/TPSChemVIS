@@ -110,7 +110,7 @@ class _CallableWorker(QThread):
         sys.stdout = tee
         try:
             result = self._fn()
-        except Exception as exc:
+        except BaseException as exc:
             sys.stdout = orig_stdout
             if file_obj:
                 try:
@@ -145,11 +145,17 @@ class ScfWorker(_CallableWorker):
         chk_path: str | Path,
         parent: QObject | None = None,
         log_path: str | Path | None = None,
+        density_fit: bool = False,
+        auxbasis: str | None = None,
+        newton: bool = False,
     ) -> None:
         from asbuilder.io.run_scf import run_scf
 
         def _run():
-            return run_scf(xyz=xyz, basis=basis, method=method, charge=charge, spin=spin, chk_path=chk_path)
+            return run_scf(
+                xyz=xyz, basis=basis, method=method, charge=charge, spin=spin,
+                chk_path=chk_path, density_fit=density_fit, auxbasis=auxbasis, newton=newton,
+            )
 
         super().__init__(_run, parent, log_path=log_path)
 

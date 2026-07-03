@@ -10,6 +10,9 @@ _CONFIG_FILE = _CONFIG_DIR / "config.json"
 TPSCHEM_REPO = "https://github.com/arnab82/TPSChem.jl.git"
 DEFAULT_INSTALL_DIR = _CONFIG_DIR / "TPSChem.jl"
 
+VIBEMOL_REPO = "https://github.com/evangelistalab/vibemol.git"
+VIBEMOL_DIR = _CONFIG_DIR / "vibemol"
+
 
 def load() -> dict:
     if _CONFIG_FILE.exists():
@@ -37,10 +40,26 @@ def set_value(key: str, value) -> None:
 
 def julia_project() -> Path | None:
     p = get("julia_project")
-    if p and Path(p).exists():
-        return Path(p)
+    if p:
+        path = Path(p)
+        if (path / "Project.toml").exists():
+            return path
     return None
 
 
 def julia_bin() -> str:
     return get("julia_bin", "julia")
+
+
+_MAX_RECENT = 8
+
+
+def recent_projects() -> list[Path]:
+    """Return existing recent project paths, most-recent first."""
+    return [Path(p) for p in get("recent_projects", []) if Path(p).exists()]
+
+
+def add_recent_project(path: Path) -> None:
+    """Prepend path to the recent-projects list, capped at _MAX_RECENT."""
+    current = [p for p in get("recent_projects", []) if p != str(path)]
+    set_value("recent_projects", [str(path)] + current[:_MAX_RECENT - 1])

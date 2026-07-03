@@ -22,7 +22,7 @@ TPSChemVIS provides a point-and-click interface for the full TPS pipeline: build
 
 - **Resume anywhere** — Jump straight to CMF from saved integrals, or to TPSCI/Export from a saved CMF result, without restarting from scratch.
 - **Persistent config** — TPSChem.jl path is saved to `~/.asbuilder/config.json` after first setup.
-- **First-launch wizard** — Clones and builds TPSChem.jl automatically (or point to an existing clone).
+- **First-launch bootstrap** — Downloads VibeMol, clones and builds TPSChem.jl, and configures PyCall automatically.
 - **Navigation toolbar** — Click any pipeline step in the toolbar to jump back to it.
 - **Collapsible panels** — Settings sections collapse to a header so the log output gets more screen space.
 
@@ -41,7 +41,7 @@ TPSChemVIS provides a point-and-click interface for the full TPS pipeline: build
 | h5py | ≥ 3.9 | Checkpoint reading |
 | Jinja2 | ≥ 3.1 | Julia driver templating |
 | Julia | ≥ 1.11 | Required for CMF and TPSCI |
-| TPSChem.jl | latest | Installed by the setup wizard |
+| TPSChem.jl | latest | Downloaded and built on first launch |
 
 ---
 
@@ -50,11 +50,11 @@ TPSChemVIS provides a point-and-click interface for the full TPS pipeline: build
 ### 1. Clone this repository
 
 ```bash
-git clone --recurse-submodules https://github.com/arnab82/TPSChemVIS.git
+git clone https://github.com/arnab82/TPSChemVIS.git
 cd TPSChemVIS
 ```
 
-> `--recurse-submodules` fetches VibeMol (the orbital viewer) automatically.
+VibeMol is downloaded automatically on first launch to `~/.asbuilder/vibemol`.
 
 ### 2. Install Python dependencies
 
@@ -72,20 +72,21 @@ Download Julia 1.11+ from [julialang.org](https://julialang.org/downloads/) or v
 curl -fsSL https://install.julialang.org | sh
 ```
 
-### 4. Launch — the setup wizard handles the rest
+### 4. Launch — first-run bootstrap handles the rest
 
 ```bash
 asbuilder
 ```
 
-On first launch a setup wizard appears:
+On first launch TPSChemVIS automatically:
 
-- **Use existing clone** — Browse to a TPSChem.jl directory you already have.
-- **Clone from GitHub** — The app clones `https://github.com/arnab82/TPSChem.jl.git`, runs `Pkg.instantiate`, and builds PyCall automatically. Progress is shown live in the wizard.
+- downloads VibeMol to `~/.asbuilder/vibemol`;
+- clones or updates `https://github.com/arnab82/TPSChem.jl.git` into `~/.asbuilder/TPSChem.jl`;
+- runs `Pkg.instantiate`, builds PyCall against the same Python used by `pip install -e .`, and precompiles the Julia environment.
 
 The configured path is saved to `~/.asbuilder/config.json` — subsequent launches skip the wizard entirely.
 
-To re-run the wizard at any time: **Tools → Julia / TPSChem.jl setup…**
+To point at a different TPSChem.jl clone or rebuild the Julia environment, use **Tools → Julia / TPSChem.jl setup…**.
 
 ---
 
@@ -145,7 +146,7 @@ Options:
   --julia-bin PATH     Julia executable (default: julia from PATH)
   --julia-project PATH Override TPSChem.jl directory (saved to config)
   --vibemol-root PATH  Path to a custom VibeMol build
-  --setup              Force the setup wizard even if already configured
+  --setup              Force the TPSChem.jl setup dialog even if already configured
 ```
 
 ---
@@ -189,7 +190,7 @@ The **TPSCI/Export** screen generates a `submit.slurm` script alongside the Juli
 | Package | License | Notes |
 | ------- | ------- | ----- |
 | [PySCF](https://github.com/pyscf/pyscf) | Apache 2.0 | SCF and integral back-end |
-| [VibeMol](https://github.com/evangelistalab/vibemol) | MIT | 3D orbital viewer (git submodule) |
+| [VibeMol](https://github.com/evangelistalab/vibemol) | MIT | 3D orbital viewer (downloaded on first launch) |
 | [TPSChem.jl](https://github.com/arnab82/TPSChem.jl) | See repo | CMF / TPSCI / SPT engine |
 | [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) | GPL v3 | GUI framework |
 

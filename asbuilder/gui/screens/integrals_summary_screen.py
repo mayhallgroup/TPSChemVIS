@@ -91,6 +91,7 @@ class IntegralsSummaryScreen(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(splitter)
         self.setLayout(layout)
+        self.setMinimumSize(0, 0)
 
         self._molden_entries: list[tuple[str, Path]] = []   # (label, path)
 

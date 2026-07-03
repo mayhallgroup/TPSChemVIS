@@ -776,8 +776,8 @@ a:focus-visible{outline:2px solid var(--pos);outline-offset:3px}
     </div>
     <div class="feat">
       <p class="feat-tag n">Setup</p>
-      <h3 class="feat-h">First-launch wizard</h3>
-      <p class="feat-p">On first launch, TPSChemVIS clones TPSChem.jl from GitHub, runs Pkg.instantiate, and builds PyCall — all from within the app with a live log. The configured path persists in ~/.asbuilder/config.json for every subsequent launch.</p>
+      <h3 class="feat-h">First-launch bootstrap</h3>
+      <p class="feat-p">On first launch, TPSChemVIS downloads VibeMol, clones TPSChem.jl from GitHub, runs Pkg.instantiate, builds PyCall against the active Python, and precompiles the Julia environment. The configured path persists in ~/.asbuilder/config.json for every subsequent launch.</p>
     </div>
   </div>
 </div>
@@ -1105,15 +1105,15 @@ function showStep(i){
   <div class="install-inner">
     <p class="section-label">Installation</p>
     <h2 class="section-heading">Up and running in four steps</h2>
-    <p class="section-sub">Requires Python ≥ 3.11 and Julia ≥ 1.11. TPSChem.jl is installed automatically by the setup wizard.</p>
+    <p class="section-sub">Requires Python ≥ 3.11 and Julia ≥ 1.11. VibeMol and TPSChem.jl are installed automatically on first launch.</p>
 
     <div class="steps">
       <div class="step">
         <span class="step-n">01</span>
         <div class="step-body">
           <p class="step-title">Clone the repository</p>
-          <p class="step-desc">The <code style="font-family:var(--mono);font-size:.8em;color:var(--pos)">--recurse-submodules</code> flag fetches VibeMol automatically.</p>
-          <pre class="code">git clone --recurse-submodules https://github.com/arnab82/TPSChemVIS.git
+          <p class="step-desc">No submodules are required; VibeMol is downloaded automatically on first launch.</p>
+          <pre class="code">git clone https://github.com/arnab82/TPSChemVIS.git
 cd TPSChemVIS</pre>
         </div>
       </div>
@@ -1136,8 +1136,8 @@ cd TPSChemVIS</pre>
       <div class="step">
         <span class="step-n">04</span>
         <div class="step-body">
-          <p class="step-title">Launch — the setup wizard handles TPSChem.jl</p>
-          <p class="step-desc">On first launch the wizard clones and builds TPSChem.jl. Subsequent launches start immediately.</p>
+          <p class="step-title">Launch — first-run bootstrap handles the rest</p>
+          <p class="step-desc">On first launch TPSChemVIS downloads VibeMol, clones or updates TPSChem.jl, instantiates packages, builds PyCall, and precompiles. Subsequent launches start immediately.</p>
           <pre class="code">asbuilder                      <span class="comment"># opens the last project</span>
 asbuilder ~/calcs/fe2s2.qcproj <span class="comment"># open or create a named project</span>
 asbuilder --setup              <span class="comment"># re-run the TPSChem.jl wizard</span></pre>
@@ -1165,7 +1165,7 @@ asbuilder --setup              <span class="comment"># re-run the TPSChem.jl wiz
         <tr><td>h5py</td><td>≥ 3.9</td><td><span class="badge py">Python</span></td><td>Checkpoint file reading</td></tr>
         <tr><td>Jinja2</td><td>≥ 3.1</td><td><span class="badge py">Python</span></td><td>Julia driver templating</td></tr>
         <tr><td>TPSChem.jl</td><td>latest</td><td><span class="badge jl">Julia</span></td><td>CMF / TPSCI / SPT engine</td></tr>
-        <tr><td>VibeMol</td><td>submodule</td><td><span class="badge sys">Submodule</span></td><td>3D orbital visualization (MIT)</td></tr>
+        <tr><td>VibeMol</td><td>latest</td><td><span class="badge sys">First launch</span></td><td>3D orbital visualization (MIT)</td></tr>
         <tr><td>Julia</td><td>≥ 1.11</td><td><span class="badge sys">System</span></td><td>Julia runtime</td></tr>
         <tr><td>Python</td><td>≥ 3.11</td><td><span class="badge sys">System</span></td><td>Python runtime</td></tr>
       </tbody>

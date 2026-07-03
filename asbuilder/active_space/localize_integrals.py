@@ -197,8 +197,9 @@ def build_active_space(
     print(f" ---- Partitioning mode: {'SPADE' if spade_mode else 'Manual'} ----")
 
     if spade_mode:
-        _run_spade(mol, clusters, Cdocc, Csing, Cvirt, S, nsing)
-        Cact, Cenv = _cact_from_clusters(mol, mo_coeff, clusters, ndocc)
+        Cact, Cenv = _run_spade(mol, clusters, Cdocc, Csing, Cvirt, S, nsing)
+        # Cact = np.hstack(sym_ortho'd Cfrags) from SPADE — NOT the original SCF MOs.
+        # cluster.orbitals and cluster.fspace are updated in-place by _run_spade.
     else:
         Cact, Cenv = _cact_manual(mol, mo_coeff, clusters, ndocc, mo_occ)
 
@@ -297,7 +298,13 @@ def _save_moldens(mol, Cact, Cenv, clusters, out: Path) -> None:
 
 
 def _run_spade(mol, clusters, Cdocc, Csing, Cvirt, S, nsing):
-    """Run two-level SPADE and update cluster.orbitals/fspace in-place."""
+    """Run two-level SPADE; update cluster.orbitals/fspace in-place.
+
+    Returns (Cact, Cenv):
+      Cact — np.hstack of sym_ortho'd per-cluster orbital blocks (NOT original SCF MOs).
+      Cenv — environment doubly-occupied MOs (from global SVD, same subspace as
+             mo_coeff columns not selected into the active space).
+    """
     X = scipy.linalg.sqrtm(S).real
     ao_labels = mol.ao_labels(fmt=False)  # (atom_idx, symbol, ao_type, component)
 
@@ -316,7 +323,10 @@ def _run_spade(mol, clusters, Cdocc, Csing, Cvirt, S, nsing):
             i for i, ao in enumerate(ao_labels)
             if ao[0] in atom_set and (
                 ao_type_filter is None or
-                any(ao[2].lstrip("0123456789").startswith(t) for t in ao_type_filter)
+                any(
+                    ao[2] == t or ao[2].lstrip("0123456789") == t
+                    for t in ao_type_filter
+                )
             )
         ]
         if not frag_ao:
@@ -334,6 +344,7 @@ def _run_spade(mol, clusters, Cdocc, Csing, Cvirt, S, nsing):
     all_blocks = [Cdocc, Csing, Cvirt]  # some may be (nao, 0) for RHF
     Cf, Ce = svd_subspace_partitioning(all_blocks, Pfull, S)
     Oact, Sact, Vact = Cf[0], Cf[1], Cf[2]
+    # Ce[0] = environment doubly-occupied MOs (low overlap with Pfull)
     Cenv = Ce[0]
 
     # Per-cluster partition of the active space
@@ -357,8 +368,11 @@ def _run_spade(mol, clusters, Cdocc, Csing, Cvirt, S, nsing):
         cluster_orb_lists.append(list(range(orb_index, orb_index + nmof)))
         orb_index += nmof
 
-    # Orthogonalize across clusters
+    # Orthogonalize fragment orbital blocks across clusters
     Cfrags = sym_ortho(Cfrags, S)
+    # SPADE active orbital coefficients: columns are the new SPADE-rotated MOs,
+    # NOT columns of the original SCF mo_coeff matrix.
+    Cact = np.hstack(Cfrags)
 
     # Write results back into Cluster objects
     for cluster, orb_list, fsp in zip(clusters, cluster_orb_lists, init_fspace):
@@ -370,6 +384,8 @@ def _run_spade(mol, clusters, Cdocc, Csing, Cvirt, S, nsing):
     print(f" init_fspace = {init_fspace}")
     print(f" clusters    = {cluster_orb_lists}")
     print(" ----------------------")
+
+    return Cact, Cenv
 
 
 def _cact_from_clusters(mol, mo_coeff, clusters, ndocc):

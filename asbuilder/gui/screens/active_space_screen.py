@@ -74,6 +74,8 @@ class ActiveSpaceScreen(QWidget):
         layout.addWidget(self._log)
         layout.addLayout(btn_row)
         self.setLayout(layout)
+        self.setMinimumSize(0, 0)
+        self._log.setMinimumSize(0, 0)
 
         self._chk: ChkContents | None = None
         self._clusters: ClusterSet | None = None

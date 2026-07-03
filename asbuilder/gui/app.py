@@ -2,9 +2,9 @@
 Entry point: `python -m asbuilder.gui.app [project_dir]`
               or `asbuilder` (after `pip install -e .`)
 
-On first launch the setup wizard runs automatically to clone and build
-TPSChem.jl.  Config is persisted at ~/.asbuilder/config.json so subsequent
-launches need no flags.
+On first launch TPSChemVIS downloads VibeMol and bootstraps TPSChem.jl.
+Config is persisted at ~/.asbuilder/config.json so subsequent launches need
+no flags.
 """
 from __future__ import annotations
 
@@ -13,8 +13,81 @@ import sys
 from pathlib import Path
 
 
+def _ensure_vibemol() -> None:
+    """Download VibeMol to ~/.asbuilder/vibemol/ on first launch if missing."""
+    from asbuilder.webview.server import _default_vibemol_root
+    if (_default_vibemol_root() / "index.html").exists():
+        return
+
+    import subprocess
+    from asbuilder.config import VIBEMOL_REPO, VIBEMOL_DIR
+    from PyQt6.QtCore import QThread, QTimer, pyqtSignal
+    from PyQt6.QtWidgets import QDialog, QLabel, QPlainTextEdit, QPushButton, QVBoxLayout
+
+    class _Downloader(QThread):
+        line = pyqtSignal(str)
+        done = pyqtSignal(bool, str)
+
+        def run(self):
+            try:
+                VIBEMOL_DIR.parent.mkdir(parents=True, exist_ok=True)
+                if (VIBEMOL_DIR / ".git").exists():
+                    cmd = ["git", "-C", str(VIBEMOL_DIR), "pull", "--ff-only"]
+                else:
+                    if VIBEMOL_DIR.exists():
+                        self.done.emit(False, f"{VIBEMOL_DIR} exists but is not a VibeMol checkout")
+                        return
+                    cmd = ["git", "clone", "--depth", "1", VIBEMOL_REPO, str(VIBEMOL_DIR)]
+
+                r = subprocess.run(cmd, capture_output=True, text=True)
+                for ln in (r.stdout + r.stderr).splitlines():
+                    self.line.emit(ln)
+                ok = r.returncode == 0 and (VIBEMOL_DIR / "index.html").exists()
+                msg = "" if ok else (r.stderr or "VibeMol checkout did not contain index.html")
+                self.done.emit(ok, msg)
+            except Exception as exc:
+                self.done.emit(False, str(exc))
+
+    from asbuilder.gui._screen_util import fit_to_screen
+    dlg = QDialog()
+    dlg.setWindowTitle("One-time setup: VibeMol orbital viewer")
+    fit_to_screen(dlg, 520, 320)
+    label = QLabel(
+        "<b>VibeMol</b> (orbital viewer) is not installed yet.<br>"
+        "Downloading a local copy now — this is a one-time step (~5 MB)."
+    )
+    label.setWordWrap(True)
+    log = QPlainTextEdit()
+    log.setReadOnly(True)
+    font = log.font(); font.setFamily("monospace"); log.setFont(font)
+    skip_btn = QPushButton("Skip (orbital viewer won't work this session)")
+    skip_btn.clicked.connect(dlg.reject)
+    layout = QVBoxLayout(dlg)
+    layout.addWidget(label)
+    layout.addWidget(log)
+    layout.addWidget(skip_btn)
+
+    worker = _Downloader(dlg)
+    worker.line.connect(log.appendPlainText)
+
+    def _on_done(ok: bool, err: str) -> None:
+        if ok:
+            label.setText("<b>VibeMol downloaded successfully.</b> Continuing…")
+            skip_btn.setText("Continue →")
+            skip_btn.clicked.disconnect()
+            skip_btn.clicked.connect(dlg.accept)
+            QTimer.singleShot(800, dlg.accept)
+        else:
+            label.setText(f"<b>Download failed</b> — orbital viewer won't work.<br>{err}")
+            skip_btn.setText("Continue without VibeMol")
+
+    worker.done.connect(_on_done)
+    worker.start()
+    dlg.exec()
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Active Space Builder")
+    parser = argparse.ArgumentParser(description="TPS-chemistry")
     parser.add_argument(
         "project_dir",
         nargs="?",
@@ -34,7 +107,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--setup", action="store_true",
-        help="Force the setup wizard even if TPSChem.jl is already configured",
+        help="Force the TPSChem.jl setup dialog even if already configured",
     )
     args = parser.parse_args()
 
@@ -43,7 +116,7 @@ def main() -> int:
     from asbuilder.gui.main_window import MainWindow
 
     app = QApplication(sys.argv)
-    app.setApplicationName("Active Space Builder")
+    app.setApplicationName("TPS-chemistry")
     app.setOrganizationName("asbuilder")
 
     # Show a dialog for unhandled exceptions instead of silently exiting
@@ -63,6 +136,10 @@ def main() -> int:
 
     sys.excepthook = _excepthook
 
+    # --- one-time VibeMol download (fast, skippable) ---
+    if not args.vibemol_root:
+        _ensure_vibemol()
+
     # --- resolve julia_bin ---
     julia_bin = args.julia_bin or cfg.julia_bin()
 
@@ -81,10 +158,10 @@ def main() -> int:
             julia_project = sibling
             cfg.set_value("julia_project", str(julia_project))
 
-    # --- show setup wizard if TPSChem.jl not found ---
+    # --- bootstrap TPSChem.jl if not found ---
     if julia_project is None or args.setup:
         from asbuilder.gui.screens.setup_screen import SetupDialog
-        dlg = SetupDialog(julia_bin=julia_bin)
+        dlg = SetupDialog(julia_bin=julia_bin, auto_start=(julia_project is None and not args.setup))
         if dlg.exec() and dlg.chosen_path:
             julia_project = dlg.chosen_path
         elif julia_project is None:
@@ -95,9 +172,13 @@ def main() -> int:
     if args.project_dir:
         project_dir = Path(args.project_dir)
     else:
-        default_root = Path.home() / "asbuilder_projects"
-        default_root.mkdir(exist_ok=True)
-        project_dir = default_root / "untitled.qcproj"
+        from asbuilder.gui.screens.project_picker import ProjectPickerDialog
+        picker = ProjectPickerDialog()
+        if not picker.exec() or picker.chosen_path is None:
+            return 0   # user cancelled the picker → quit cleanly
+        project_dir = picker.chosen_path
+
+    cfg.add_recent_project(project_dir)
 
     window = MainWindow(
         project_root=project_dir,

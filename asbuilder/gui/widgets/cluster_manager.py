@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QColorDialog,
     QFormLayout,
+    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -75,19 +76,17 @@ class ClusterManager(QWidget):
         self._n_beta.valueChanged.connect(self._on_fspace_edited)
 
         # -- SPADE orbital type filter (shown only in SPADE mode) ----------
-        self._ao_group = QGroupBox("AO types for SPADE projector")
+        self._ao_group = QGroupBox("AO shells for SPADE projector")
         self._ao_group.setVisible(False)
         ao_inner = QVBoxLayout(self._ao_group)
-        ao_inner.addWidget(QLabel("Which orbital types from this cluster's atoms?"))
+        ao_inner.addWidget(QLabel("Which shells from this cluster's atoms to include:"))
+        self._ao_shell_widget = QWidget()
+        self._ao_shell_grid = QGridLayout(self._ao_shell_widget)
+        self._ao_shell_grid.setContentsMargins(0, 0, 0, 0)
+        ao_inner.addWidget(self._ao_shell_widget)
+        ao_inner.addWidget(QLabel("(leave all unchecked = include all shells)"))
         self._ao_checks: dict[str, QCheckBox] = {}
-        ao_row = QHBoxLayout()
-        for t in ("s", "p", "d", "f"):
-            cb = QCheckBox(t)
-            cb.stateChanged.connect(self._on_ao_types_changed)
-            self._ao_checks[t] = cb
-            ao_row.addWidget(cb)
-        ao_inner.addLayout(ao_row)
-        ao_inner.addWidget(QLabel("(leave all unchecked = use all AO types)"))
+        self._build_ao_checks(["s", "p", "d", "f"])  # sensible default before mol loads
 
         form = QFormLayout()
         form.addRow("Name", self._name_edit)
@@ -106,6 +105,29 @@ class ClusterManager(QWidget):
         self._set_editor_enabled(False)
 
     # -- public API used by screens ---------------------------------------
+
+    def reset(self, cluster_set: ClusterSet | None = None) -> None:
+        """Replace the internal ClusterSet with a fresh one (or the given one)
+        and clear the list. Call this when a new molecule is loaded."""
+        self.clusters = cluster_set if cluster_set is not None else ClusterSet()
+        self._refresh_list()
+        self._set_editor_enabled(False)
+
+    def set_available_shells(self, shells: list[str]) -> None:
+        """Rebuild the AO shell checkboxes from the molecule's actual shells.
+        Called from ViewerScreen.load() after mol.ao_labels() is parsed."""
+        self._build_ao_checks(shells if shells else ["s", "p", "d", "f"])
+
+    def _build_ao_checks(self, shells: list[str]) -> None:
+        for cb in self._ao_checks.values():
+            self._ao_shell_grid.removeWidget(cb)
+            cb.deleteLater()
+        self._ao_checks.clear()
+        for i, shell in enumerate(shells):
+            cb = QCheckBox(shell)
+            cb.stateChanged.connect(self._on_ao_types_changed)
+            self._ao_checks[shell] = cb
+            self._ao_shell_grid.addWidget(cb, i // 5, i % 5)
 
     def set_spade_mode(self, spade: bool) -> None:
         """Show/hide the SPADE-specific AO type filter."""

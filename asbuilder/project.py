@@ -73,10 +73,10 @@ class ProjectState:
 
     @classmethod
     def create(cls, root: Path) -> "ProjectState":
-        """Initialize a brand new project folder at `root`."""
+        """Initialize a project folder at `root`, creating it if needed.
+        Safe to call on a folder that already has files (e.g. after a crash
+        that left input.chk but no project.json): existing artifacts are kept."""
         root = Path(root)
-        if root.exists() and any(root.iterdir()):
-            raise FileExistsError(f"{root} already exists and is not empty")
         root.mkdir(parents=True, exist_ok=True)
         (root / "active_space").mkdir(exist_ok=True)
         (root / "cmf").mkdir(exist_ok=True)
