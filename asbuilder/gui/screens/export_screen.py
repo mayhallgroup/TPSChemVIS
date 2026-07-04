@@ -121,6 +121,13 @@ class ExportScreen(QWidget):
         self._max_roots  = QSpinBox(); self._max_roots.setRange(1, 500); self._max_roots.setValue(100)
         self._nroots     = QSpinBox(); self._nroots.setRange(1, 50);     self._nroots.setValue(4)
         self._thresh_foi = QLineEdit("1e-4")
+        self._threads    = QComboBox()
+        self._threads.setEditable(True)
+        self._threads.addItems(["auto", "1", "2", "4", "8", "16", "32", "64"])
+        self._threads.setToolTip(
+            "Julia --threads setting for post-CMF local runs and generated Slurm scripts.\n"
+            "CMF is always launched single-threaded. Use 'auto' or a positive integer."
+        )
         self._delta_elec = QSpinBox(); self._delta_elec.setRange(1, 8); self._delta_elec.setValue(3)
         self._delta_elec.setToolTip(
             "delta_elec passed to compute_cluster_eigenbasis_spin: number of electrons\n"
@@ -146,6 +153,7 @@ class ExportScreen(QWidget):
         shared_form.addRow("max_roots (eigenbasis)", self._max_roots)
         shared_form.addRow("nroots", self._nroots)
         shared_form.addRow("thresh_foi", self._thresh_foi)
+        shared_form.addRow("Julia threads (post-CMF)", self._threads)
         shared_form.addRow("Δn_elec per cluster (spin basis)", self._delta_elec)
         shared_form.addRow("Spin-flip clusters (open-shell)", self._flip_clusters)
         shared_form.addRow("Verbose", self._verbose)
@@ -329,13 +337,6 @@ class ExportScreen(QWidget):
         self._partition = QLineEdit("normal")
         self._nodes     = QSpinBox(); self._nodes.setRange(1, 1000); self._nodes.setValue(1)
         self._walltime  = QLineEdit("24:00:00")
-        self._threads   = QComboBox()
-        self._threads.setEditable(True)
-        self._threads.addItems(["auto", "1", "2", "4", "8", "16", "32", "64"])
-        self._threads.setToolTip(
-            "Julia --threads setting for local runs and generated Slurm scripts.\n"
-            "Use 'auto' or a positive integer."
-        )
         self._mem       = QLineEdit("64G")
 
         hpc_form = QFormLayout()
@@ -344,10 +345,9 @@ class ExportScreen(QWidget):
         hpc_form.addRow("Partition",    self._partition)
         hpc_form.addRow("Nodes",        self._nodes)
         hpc_form.addRow("Walltime",     self._walltime)
-        hpc_form.addRow("Julia threads (-t)", self._threads)
         hpc_form.addRow("Memory",       self._mem)
 
-        hpc_group = CollapsibleSection("Julia runtime / HPC submission (SLURM)")
+        hpc_group = CollapsibleSection("HPC submission (SLURM)")
         hpc_group.set_body_layout(hpc_form)
 
         # ── preview tabs ─────────────────────────────────────────────
