@@ -196,7 +196,9 @@ class JuliaProcessWorker(QObject):
     version fails fast with a clear message instead of a confusing crash
     partway through a long CMF run.
 
-    If `log_path` is given, output is also written to that file in real time.
+    If `log_path` is given, cleaned line output is also written there in real
+    time. If `out_path` is given, raw Julia stdout/stderr is written there,
+    preserving progress-bar output for post-run inspection.
     """
 
     line_received = pyqtSignal(str)
@@ -210,6 +212,7 @@ class JuliaProcessWorker(QObject):
         julia_bin: str = "julia",
         parent: QObject | None = None,
         log_path: str | Path | None = None,
+        out_path: str | Path | None = None,
         threads: str | int | None = None,
     ) -> None:
         super().__init__(parent)
@@ -217,8 +220,11 @@ class JuliaProcessWorker(QObject):
         self._project_dir = str(project_dir)
         self._julia_bin = julia_bin
         self._log_path = Path(log_path) if log_path else None
+        self._out_path = Path(out_path) if out_path else None
         self._threads = threads
         self._log_file = None
+        self._out_file = None
+        self._line_buffer = ""
         self._process = QProcess(self)
         self._process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         self._process.readyReadStandardOutput.connect(self._on_ready_read)
@@ -237,9 +243,6 @@ class JuliaProcessWorker(QObject):
         except ValueError as exc:
             self.failed.emit(str(exc))
             return
-        self.line_received.emit(f"[julia] using Julia {version}")
-        if thread_args:
-            self.line_received.emit(f"[julia] launch threads: {thread_args[0].split('=', 1)[1]}")
 
         if self._log_path:
             try:
@@ -248,27 +251,64 @@ class JuliaProcessWorker(QObject):
             except Exception:
                 self._log_file = None
 
+        if self._out_path:
+            try:
+                self._out_path.parent.mkdir(parents=True, exist_ok=True)
+                self._out_file = open(self._out_path, "ab")
+            except Exception:
+                self._out_file = None
+
+        self._emit_clean_line(f"[julia] using Julia {version}")
+        if thread_args:
+            self._emit_clean_line(f"[julia] launch threads: {thread_args[0].split('=', 1)[1]}")
+
         args = [f"--project={self._project_dir}", *thread_args, self._script_path]
         self._process.start(self._julia_bin, args)
 
+    def _emit_clean_line(self, line: str) -> None:
+        self.line_received.emit(line)
+        if self._log_file:
+            try:
+                self._log_file.write(line + "\n")
+                self._log_file.flush()
+            except Exception:
+                pass
+
     def _on_ready_read(self) -> None:
-        data = bytes(self._process.readAllStandardOutput()).decode("utf-8", errors="replace")
-        for line in data.splitlines():
-            self.line_received.emit(line)
-            if self._log_file:
-                try:
-                    self._log_file.write(line + "\n")
-                    self._log_file.flush()
-                except Exception:
-                    pass
+        raw = bytes(self._process.readAllStandardOutput())
+        if self._out_file:
+            try:
+                self._out_file.write(raw)
+                self._out_file.flush()
+            except Exception:
+                pass
+
+        from asbuilder.julia_bridge.runner import consume_output_lines
+
+        data = raw.decode("utf-8", errors="replace")
+        lines, self._line_buffer = consume_output_lines(self._line_buffer, data)
+        for line in lines:
+            self._emit_clean_line(line)
 
     def _on_finished(self, exit_code: int, _exit_status: Any) -> None:
+        from asbuilder.julia_bridge.runner import flush_output_buffer
+
+        for line in flush_output_buffer(self._line_buffer):
+            self._emit_clean_line(line)
+        self._line_buffer = ""
+
         if self._log_file:
             try:
                 self._log_file.close()
             except Exception:
                 pass
             self._log_file = None
+        if self._out_file:
+            try:
+                self._out_file.close()
+            except Exception:
+                pass
+            self._out_file = None
         self.finished_ok.emit(exit_code)
 
     def is_running(self) -> bool:

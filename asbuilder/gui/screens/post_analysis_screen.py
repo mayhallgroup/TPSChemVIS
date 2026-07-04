@@ -758,6 +758,7 @@ class PostAnalysisScreen(QWidget):
             julia_project,
             parent=self,
             log_path=Path(ctx["output_dir"]) / "post_analysis.log",
+            out_path=Path(ctx["output_dir"]) / "post_analysis.out",
         )
         self._worker.line_received.connect(self._log.append_line)
         self._worker.finished_ok.connect(self._on_finished)

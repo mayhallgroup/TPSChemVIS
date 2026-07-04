@@ -341,6 +341,7 @@ class CMFScreen(QWidget):
         self._worker = JuliaProcessWorker(
             script_path, julia_project,
             julia_bin=self._julia_bin, parent=self, log_path=log_path,
+            out_path=self._output_dir / "cmf.out",
             threads=1,
         )
         self._worker.line_received.connect(self._log.append_line)

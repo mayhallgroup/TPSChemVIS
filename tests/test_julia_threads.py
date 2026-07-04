@@ -1,6 +1,11 @@
 import unittest
 
-from asbuilder.julia_bridge.runner import julia_thread_args, render_driver
+from asbuilder.julia_bridge.runner import (
+    consume_output_lines,
+    flush_output_buffer,
+    julia_thread_args,
+    render_driver,
+)
 
 
 class JuliaThreadTests(unittest.TestCase):
@@ -36,6 +41,21 @@ class JuliaThreadTests(unittest.TestCase):
 
         self.assertIn("Base.Threads.nthreads()", tpsci)
         self.assertIn("Base.Threads.nthreads()", spt)
+
+    def test_stream_output_buffers_partial_progress_lines(self) -> None:
+        lines, buffer = consume_output_lines("", "   |---")
+        self.assertEqual(lines, [])
+        lines, buffer = consume_output_lines(buffer, "----")
+        self.assertEqual(lines, [])
+        lines, buffer = consume_output_lines(buffer, "---|\nDone\n")
+
+        self.assertEqual(lines, ["   |----------|", "Done"])
+        self.assertEqual(buffer, "")
+
+    def test_stream_output_collapses_carriage_return_redraws(self) -> None:
+        lines, buffer = consume_output_lines("", "progress 10%\rprogress 20%")
+        self.assertEqual(lines, [])
+        self.assertEqual(flush_output_buffer(buffer), ["progress 20%"])
 
 
 if __name__ == "__main__":

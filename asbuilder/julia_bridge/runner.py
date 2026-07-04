@@ -55,6 +55,40 @@ def julia_thread_args(threads: str | int | None) -> list[str]:
     return [f"--threads={nthreads}"]
 
 
+def consume_output_lines(buffer: str, text: str) -> tuple[list[str], str]:
+    """Split streamed process output into display lines without chunk noise.
+
+    QProcess may deliver a single Julia progress-bar line as many small chunks.
+    This helper emits only newline-terminated lines and keeps the incomplete
+    tail buffered for the next chunk. Carriage-return redraws are collapsed to
+    the latest visible line.
+    """
+    text = text.replace("\r\n", "\n")
+    parts = text.split("\n")
+    lines: list[str] = []
+
+    for part in parts[:-1]:
+        current = buffer + part
+        if "\r" in current:
+            current = current.rsplit("\r", 1)[-1]
+        lines.append(current)
+        buffer = ""
+
+    tail = buffer + parts[-1]
+    if "\r" in tail:
+        tail = tail.rsplit("\r", 1)[-1]
+    return lines, tail
+
+
+def flush_output_buffer(buffer: str) -> list[str]:
+    """Return the final unterminated display line, if any."""
+    if not buffer:
+        return []
+    if "\r" in buffer:
+        buffer = buffer.rsplit("\r", 1)[-1]
+    return [buffer] if buffer else []
+
+
 def _env() -> Environment:
     # StrictUndefined: fail loudly on a missing template variable instead of
     # silently rendering "" into a driver script -- wrong integrals paths

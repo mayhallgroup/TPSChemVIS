@@ -684,6 +684,7 @@ class ExportScreen(QWidget):
             driver_path, julia_project,
             parent=self,
             log_path=self._export_dir / "export.log",
+            out_path=self._export_dir / "export.out",
             threads=self._thread_setting(),
         )
         self._worker.line_received.connect(self._log.append_line)
